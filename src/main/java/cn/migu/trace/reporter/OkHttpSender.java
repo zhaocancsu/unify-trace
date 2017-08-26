@@ -4,6 +4,7 @@ import static cn.migu.trace.internal.Util.checkArgument;
 import static cn.migu.trace.internal.Util.checkNotNull;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +23,7 @@ import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSink;
 
+import org.apache.commons.beanutils.BeanMap;
 import org.omg.IOP.Encoding;
 
 import cn.migu.trace.context.Span;
@@ -157,10 +159,16 @@ public abstract class OkHttpSender implements Sender
             throw new IllegalStateException("closed");
         try
         {
-            RequestBody requestBody =
-                new MultipartBody.Builder().setType(MultipartBody.FORM)
-                    .addFormDataPart("somParam", "someValue")
-                    .build();
+            MultipartBody.Builder builder = new MultipartBody.Builder().setType(MultipartBody.FORM);
+            
+            Map<?,?> map = new BeanMap(span);
+            for(Map.Entry<?,?> entry : map.entrySet()) {
+                String k = (String)entry.getKey();
+                String v = (String)entry.getValue();
+                builder.addFormDataPart(k, v);
+            }
+            
+            RequestBody requestBody = builder.build();
             
             Request request = newRequest(requestBody);
             client().newCall(request).enqueue(new CallbackAdapter(callback));
