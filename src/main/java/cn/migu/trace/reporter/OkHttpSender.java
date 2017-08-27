@@ -9,6 +9,11 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.beanutils.BeanUtils;
+
+import com.google.auto.value.AutoValue;
+
+import cn.migu.trace.context.Span;
 import okhttp3.Call;
 import okhttp3.Dispatcher;
 import okhttp3.HttpUrl;
@@ -22,12 +27,6 @@ import okhttp3.ResponseBody;
 import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSink;
-
-import org.apache.commons.beanutils.BeanMap;
-
-import com.google.auto.value.AutoValue;
-
-import cn.migu.trace.context.Span;
 
 @AutoValue
 public abstract class OkHttpSender implements Sender
@@ -87,10 +86,10 @@ public abstract class OkHttpSender implements Sender
         {
             // bound the executor so that we get consistent performance
             ThreadPoolExecutor dispatchExecutor = new ThreadPoolExecutor(0, maxRequests(), 60, TimeUnit.SECONDS,
-            // Using a synchronous queue means messages will send immediately until we hit max
-            // in-flight requests. Once max requests are hit, send will block the caller, which is
-            // the AsyncReporter flush thread. This is ok, as the AsyncReporter has a buffer of
-            // unsent spans for this purpose.
+                // Using a synchronous queue means messages will send immediately until we hit max
+                // in-flight requests. Once max requests are hit, send will block the caller, which is
+                // the AsyncReporter flush thread. This is ok, as the AsyncReporter has a buffer of
+                // unsent spans for this purpose.
                 new SynchronousQueue<>(), Util.threadFactory("OkHttpSender Dispatcher", false));
             Dispatcher dispatcher = new Dispatcher(dispatchExecutor);
             dispatcher.setMaxRequests(maxRequests());
@@ -160,10 +159,12 @@ public abstract class OkHttpSender implements Sender
         {
             MultipartBody.Builder builder = new MultipartBody.Builder().setType(MultipartBody.FORM);
             
-            Map<?,?> map = new BeanMap(span);
-            for(Map.Entry<?,?> entry : map.entrySet()) {
-                String k = (String)entry.getKey();
-                String v = (String)entry.getValue();
+            Map<String, String> map = BeanUtils.describe(span);
+            map.remove("class");
+            for (Map.Entry<String, String> entry : map.entrySet())
+            {
+                String k = entry.getKey();
+                String v = (null == entry.getValue()) ? "" : entry.getValue();
                 builder.addFormDataPart(k, v);
             }
             
@@ -186,10 +187,9 @@ public abstract class OkHttpSender implements Sender
     {
         try
         {
-            Request request =
-                new Request.Builder().url(endpoint())
-                    .post(RequestBody.create(MediaType.parse("application/json"), "[]"))
-                    .build();
+            Request request = new Request.Builder().url(endpoint())
+                .post(RequestBody.create(MediaType.parse("application/json"), "[]"))
+                .build();
             try (Response response = client().newCall(request).execute())
             {
                 if (!response.isSuccessful())
