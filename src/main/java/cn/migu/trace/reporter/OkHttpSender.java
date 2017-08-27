@@ -24,11 +24,10 @@ import okio.Buffer;
 import okio.BufferedSink;
 
 import org.apache.commons.beanutils.BeanMap;
-import org.omg.IOP.Encoding;
-
-import cn.migu.trace.context.Span;
 
 import com.google.auto.value.AutoValue;
+
+import cn.migu.trace.context.Span;
 
 @AutoValue
 public abstract class OkHttpSender implements Sender
@@ -41,8 +40,8 @@ public abstract class OkHttpSender implements Sender
     
     public static Builder builder()
     {
-        return new AutoValue_OkHttpSender.Builder().encoding(Encoding.THRIFT)
-            .compressionEnabled(true)
+        return new AutoValue_OkHttpSender.Builder()
+            //.compressionEnabled(true)
             .maxRequests(64)
             .messageMaxBytes(5 * 1024 * 1024);
     }
@@ -67,7 +66,7 @@ public abstract class OkHttpSender implements Sender
         public abstract Builder endpoint(HttpUrl endpoint);
         
         /** Default true. true implies that spans will be gzipped before transport. */
-        public abstract Builder compressionEnabled(boolean compressSpans);
+        //public abstract Builder compressionEnabled(boolean compressSpans);
         
         /** Maximum size of a message. Default 5MiB */
         public abstract Builder messageMaxBytes(int messageMaxBytes);
