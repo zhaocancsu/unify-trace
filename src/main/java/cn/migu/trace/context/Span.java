@@ -28,7 +28,6 @@ public class Span
     public Span(String traceId, String traceName, String spanId, String spanName, String spanParentId, String type,
         String host, String timestamp, String annotation)
     {
-        super();
         this.traceId = traceId;
         this.traceName = traceName;
         this.spanId = spanId;
