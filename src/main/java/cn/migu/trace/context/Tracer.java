@@ -2,13 +2,18 @@ package cn.migu.trace.context;
 
 import org.apache.commons.lang3.StringUtils;
 
+import cn.migu.trace.reporter.Sender;
+
 public class Tracer
 {
     private final CurrentTraceContext currentTraceContext;
     
+    private final Sender reporter;
+    
     public Tracer(Tracing.Builder builder)
     {
         this.currentTraceContext = builder.currentTraceContext;
+        this.reporter = builder.reporter;
     }
     
     public Tracer addTraceContext(TraceContext traceCtx)
@@ -20,6 +25,11 @@ public class Tracer
     public CurrentTraceContext getCurrentTraceContext()
     {
         return currentTraceContext;
+    }
+    
+    public Sender getReporter()
+    {
+        return reporter;
     }
     
     public Span newSpan(boolean isRoot)

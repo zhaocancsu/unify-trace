@@ -5,6 +5,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.StringUtils;
+
+import cn.migu.trace.reporter.OkHttpSender;
+import cn.migu.trace.reporter.Sender;
+
 public abstract class Tracing implements Closeable
 {
     
@@ -39,6 +44,9 @@ public abstract class Tracing implements Closeable
     
     public static final class Builder
     {
+        String server;
+        
+        Sender reporter;
         
         CurrentTraceContext currentTraceContext = new CurrentTraceContext.Default();
         
@@ -48,9 +56,38 @@ public abstract class Tracing implements Closeable
             return this;
         }
         
+        public Tracing.Builder reporter(Sender reporter)
+        {
+            if (reporter == null)
+            {
+                throw new NullPointerException("sender == null");
+            }
+            else
+            {
+                this.reporter = reporter;
+                return this;
+            }
+        }
+        
+        public Tracing.Builder server(String server)
+        {
+            if (StringUtils.isEmpty(server))
+            {
+                throw new NullPointerException("server == null");
+            }
+            else
+            {
+                this.server = server;
+                return this;
+            }
+        }
+        
         public Tracing build()
         {
-            
+            if (null == this.reporter)
+            {
+                this.reporter = OkHttpSender.create(server);
+            }
             return new Default(this);
         }
         

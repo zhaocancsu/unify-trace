@@ -9,7 +9,7 @@ public class MainTest
     public static void main(String[] args)
         throws InterruptedException
     {
-        Tracer tracer1 = Tracing.newBuilder().build().tracer();
+        Tracer tracer1 = Tracing.newBuilder().server("111").build().tracer();
         Tracer tracer2 = Tracing.newBuilder().build().tracer();
         System.out.println(tracer1);
         System.out.println(tracer2);
@@ -39,6 +39,8 @@ public class MainTest
             {
                 TraceContext tc = new TraceContext();
                 tc.setTraceId("2232232323a");
+                tc.setSpanName("ab");
+                tc.setType("cr");
                 long t1 = System.currentTimeMillis();
                 tracer2.addTraceContext(tc);
                 //System.out.println(tracer2.currentTraceContext.get().getTraceId());

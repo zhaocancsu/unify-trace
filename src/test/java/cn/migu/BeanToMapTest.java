@@ -24,6 +24,8 @@ public class BeanToMapTest
             String v = (String)entry.getValue();
             System.out.println(k + "=" + v);
         }
+        
+        System.out.println(System.currentTimeMillis());
     }
     
 }

@@ -25,8 +25,6 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.internal.Util;
-import okio.Buffer;
-import okio.BufferedSink;
 
 @AutoValue
 public abstract class OkHttpSender implements Sender
@@ -56,7 +54,7 @@ public abstract class OkHttpSender implements Sender
         // customizable so that users can re-map /api/v1/spans ex for browser-originated traces
         public final Builder endpoint(String endpoint)
         {
-            checkNotNull(endpoint, "endpoint ex: http://zipkinhost:9411/api/v1/spans");
+            checkNotNull(endpoint, "endpoint ex: http://traceserver:8080/tracing/span");
             HttpUrl parsed = HttpUrl.parse(endpoint);
             checkArgument(parsed != null, "invalid post url: " + endpoint);
             return endpoint(parsed);
@@ -255,7 +253,7 @@ public abstract class OkHttpSender implements Sender
     {
     }
     
-    static final class BufferRequestBody extends RequestBody
+    /*static final class BufferRequestBody extends RequestBody
     {
         final MediaType contentType;
         
@@ -286,7 +284,7 @@ public abstract class OkHttpSender implements Sender
         {
             sink.write(body, body.size());
         }
-    }
+    }*/
     
     static final class CallbackAdapter implements okhttp3.Callback
     {
