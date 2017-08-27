@@ -14,7 +14,7 @@ public class TraceContext
     private String traceId;
     
     //调用链名称
-    private String traceName;
+    private String traceName = "";
     
     //请求id
     private String spanId = "";
