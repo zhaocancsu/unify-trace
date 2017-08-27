@@ -17,7 +17,7 @@ public class TraceContext
     private String traceName;
     
     //请求id
-    private String spanId;
+    private String spanId = "";
     
     //请求别名
     private String spanName;
@@ -29,7 +29,7 @@ public class TraceContext
     private String host;
     
     //额外注释
-    private String annotation;
+    private String annotation = "";
     
     public TraceContext()
     {

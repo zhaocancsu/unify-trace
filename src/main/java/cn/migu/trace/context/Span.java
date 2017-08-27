@@ -1,140 +1,33 @@
 package cn.migu.trace.context;
 
-public class Span
+import com.google.auto.value.AutoValue;
+
+@AutoValue
+public abstract class Span
 {
-    private String traceId;
+    public abstract String getTraceId();
     
-    private String traceName;
+    public abstract String getTraceName();
     
-    private String spanId;
+    public abstract String getSpanId();
     
-    private String spanName;
+    public abstract String getSpanName();
     
-    private String spanParentId;
+    public abstract String getSpanParentId();
     
-    private String type;
+    public abstract String getType();
     
-    private String host;
+    public abstract String getHost();
     
-    private String timestamp;
+    public abstract String getTimestamp();
     
-    private String annotation;
+    public abstract String getAnnotation();
     
-    public Span()
+    public static Span create(String traceId, String traceName, String spanId, String spanName, String spanParentId,
+        String type, String host, String timestamp, String annotation)
     {
-        
-    }
-    
-    public Span(String traceId, String traceName, String spanId, String spanName, String spanParentId, String type,
-        String host, String timestamp, String annotation)
-    {
-        this.traceId = traceId;
-        this.traceName = traceName;
-        this.spanId = spanId;
-        this.spanName = spanName;
-        this.spanParentId = spanParentId;
-        this.type = type;
-        this.host = host;
-        this.timestamp = timestamp;
-        this.annotation = annotation;
-    }
-    
-    public String getTraceId()
-    {
-        return traceId;
-    }
-    
-    public void setTraceId(String traceId)
-    {
-        this.traceId = traceId;
-    }
-    
-    public String getTraceName()
-    {
-        return traceName;
-    }
-    
-    public void setTraceName(String traceName)
-    {
-        this.traceName = traceName;
-    }
-    
-    public String getSpanId()
-    {
-        return spanId;
-    }
-    
-    public void setSpanId(String spanId)
-    {
-        this.spanId = spanId;
-    }
-    
-    public String getSpanName()
-    {
-        return spanName;
-    }
-    
-    public void setSpanName(String spanName)
-    {
-        this.spanName = spanName;
-    }
-    
-    public String getSpanParentId()
-    {
-        return spanParentId;
-    }
-    
-    public void setSpanParentId(String spanParentId)
-    {
-        this.spanParentId = spanParentId;
-    }
-    
-    public String getType()
-    {
-        return type;
-    }
-    
-    public void setType(String type)
-    {
-        this.type = type;
-    }
-    
-    public String getHost()
-    {
-        return host;
-    }
-    
-    public void setHost(String host)
-    {
-        this.host = host;
-    }
-    
-    public String getTimestamp()
-    {
-        return timestamp;
-    }
-    
-    public void setTimestamp(String timestamp)
-    {
-        this.timestamp = timestamp;
-    }
-    
-    public String getAnnotation()
-    {
-        return annotation;
-    }
-    
-    public void setAnnotation(String annotation)
-    {
-        this.annotation = annotation;
-    }
-    
-    @Override
-    public String toString()
-    {
-        return "Span [traceId=" + traceId + ", traceName=" + traceName + ", spanId=" + spanId + ", spanName="
-            + spanName + ", spanParentId=" + spanParentId + ", type=" + type + ", host=" + host + ", timestamp="
-            + timestamp + ", annotation=" + annotation + "]";
+        return new AutoValue_Span(traceId, traceName, spanId, spanName, spanParentId, type, host, timestamp,
+            annotation);
     }
     
 }

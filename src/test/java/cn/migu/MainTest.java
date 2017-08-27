@@ -40,7 +40,7 @@ public class MainTest
                 TraceContext tc = new TraceContext();
                 tc.setTraceId("2232232323a");
                 long t1 = System.currentTimeMillis();
-                //tracer2.currentTraceContext.newScope(tc);
+                tracer2.addTraceContext(tc);
                 //System.out.println(tracer2.currentTraceContext.get().getTraceId());
                 System.out.println(tracer2.newSpan(true));
                 long t2 = System.currentTimeMillis();

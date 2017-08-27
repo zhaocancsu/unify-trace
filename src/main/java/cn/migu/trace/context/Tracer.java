@@ -33,10 +33,15 @@ public class Tracer
         {
             String traceId = String.valueOf(Platform.get().randomLong());
             traceCtx.setTraceId(traceId);
-            Span span =
-                new Span(traceId, traceCtx.getTraceName(), String.valueOf(Platform.get().randomLong()),
-                    traceCtx.getSpanName(), null, traceCtx.getType(), Platform.get().hostAddr(),
-                    String.valueOf(Platform.get().currentTimeMicroseconds()), traceCtx.getAnnotation());
+            Span span = Span.create(traceId,
+                traceCtx.getTraceName(),
+                String.valueOf(Platform.get().randomLong()),
+                traceCtx.getSpanName(),
+                "",
+                traceCtx.getType(),
+                Platform.get().hostAddr(),
+                String.valueOf(Platform.get().currentTimeMicroseconds()),
+                traceCtx.getAnnotation());
             return span;
         }
         else
@@ -48,10 +53,15 @@ public class Tracer
             }
             
             String parentSpanId = traceCtx.getSpanId();
-            Span span =
-                new Span(traceId, traceCtx.getTraceName(), String.valueOf(Platform.get().randomLong()),
-                    traceCtx.getSpanName(), parentSpanId, traceCtx.getType(), Platform.get().hostAddr(),
-                    String.valueOf(Platform.get().currentTimeMicroseconds()), traceCtx.getAnnotation());
+            Span span = Span.create(traceId,
+                traceCtx.getTraceName(),
+                String.valueOf(Platform.get().randomLong()),
+                traceCtx.getSpanName(),
+                parentSpanId,
+                traceCtx.getType(),
+                Platform.get().hostAddr(),
+                String.valueOf(Platform.get().currentTimeMicroseconds()),
+                traceCtx.getAnnotation());
             return span;
             
         }
