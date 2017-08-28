@@ -39,8 +39,10 @@ public class ControllerInterceptor extends HandlerInterceptorAdapter
         String traceName = request.getHeader(PropagationKeys.TRACE_NAME);
         boolean isRootSpan = true;
         TraceContext traceCtx = new TraceContext();
-        traceCtx.setTraceName(traceName);
-        traceCtx.setSpanId(request.getHeader(PropagationKeys.SPAN_ID));
+        if (StringUtils.isNotEmpty(traceName))
+        {
+            traceCtx.setSpanName(traceName);
+        }
         traceCtx.setSpanName(reqURI);
         traceCtx.setType(ReportRequestType.SR);
         tracer.addTraceContext(traceCtx);
@@ -48,12 +50,21 @@ public class ControllerInterceptor extends HandlerInterceptorAdapter
         {
             isRootSpan = false;
             
-            tracer.getCurrentTraceContext().get().setTraceId(traceId);
+            TraceContext eCtx = tracer.getCurrentTraceContext().get();
+            eCtx.setTraceId(traceId);
+            eCtx.setSpanId(request.getHeader(PropagationKeys.SPAN_ID));
+        }
+        try
+        {
+            Span span = tracer.newSpan(isRootSpan);
+            //System.out.println(span);
+            sendSpan(span);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
         }
         
-        Span span = tracer.newSpan(isRootSpan);
-        //System.out.println(span);
-        sendSpan(span);
         request.setAttribute(PropagationKeys.TRACER_KEY, tracer);
         return true;
     }

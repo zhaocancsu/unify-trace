@@ -16,9 +16,9 @@ import com.google.auto.value.AutoValue;
 import cn.migu.trace.context.Span;
 import okhttp3.Call;
 import okhttp3.Dispatcher;
+import okhttp3.FormBody;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
-import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -155,7 +155,7 @@ public abstract class OkHttpSender implements Sender
             throw new IllegalStateException("closed");
         try
         {
-            MultipartBody.Builder builder = new MultipartBody.Builder().setType(MultipartBody.FORM);
+            FormBody.Builder formBuilder = new FormBody.Builder();
             
             Map<String, String> map = BeanUtils.describe(span);
             map.remove("class");
@@ -163,10 +163,10 @@ public abstract class OkHttpSender implements Sender
             {
                 String k = entry.getKey();
                 String v = (null == entry.getValue()) ? "" : entry.getValue();
-                builder.addFormDataPart(k, v);
+                formBuilder.add(k, v);
             }
             
-            RequestBody requestBody = builder.build();
+            RequestBody requestBody = formBuilder.build();
             
             Request request = newRequest(requestBody);
             client().newCall(request).enqueue(new CallbackAdapter(callback));

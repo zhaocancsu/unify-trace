@@ -20,6 +20,8 @@ public abstract class Tracing implements Closeable
     
     abstract public Tracer tracer();
     
+    abstract public String serviceName();
+    
     abstract public CurrentTraceContext currentTraceContext();
     
     static volatile Tracing current = null;
@@ -46,6 +48,8 @@ public abstract class Tracing implements Closeable
     {
         String server;
         
+        String serviceName;
+        
         Sender reporter;
         
         CurrentTraceContext currentTraceContext = new CurrentTraceContext.Default();
@@ -65,6 +69,19 @@ public abstract class Tracing implements Closeable
             else
             {
                 this.reporter = reporter;
+                return this;
+            }
+        }
+        
+        public Tracing.Builder serviceName(String serviceName)
+        {
+            if (StringUtils.isEmpty(serviceName))
+            {
+                throw new NullPointerException("serviceName == null");
+            }
+            else
+            {
+                this.serviceName = serviceName;
                 return this;
             }
         }
@@ -100,12 +117,15 @@ public abstract class Tracing implements Closeable
     {
         final Tracer tracer;
         
+        final String serviceName;
+        
         final CurrentTraceContext currentTraceContext;
         
         Default(Builder builder)
         {
             this.tracer = new Tracer(builder);
             this.currentTraceContext = builder.currentTraceContext;
+            this.serviceName = builder.serviceName;
             maybeSetCurrent();
         }
         
@@ -119,6 +139,12 @@ public abstract class Tracing implements Closeable
         public CurrentTraceContext currentTraceContext()
         {
             return currentTraceContext;
+        }
+        
+        @Override
+        public String serviceName()
+        {
+            return serviceName;
         }
         
         private void maybeSetCurrent()

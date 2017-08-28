@@ -118,4 +118,11 @@ public class TraceContext
         this.annotation = annotation;
     }
     
+    @Override
+    public String toString()
+    {
+        return "TraceContext [traceId=" + traceId + ", traceName=" + traceName + ", spanId=" + spanId + ", spanName="
+            + spanName + ", type=" + type + ", host=" + host + ", annotation=" + annotation + "]";
+    }
+    
 }
