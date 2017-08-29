@@ -13,7 +13,6 @@ import cn.migu.trace.context.Span;
 import cn.migu.trace.context.TraceContext;
 import cn.migu.trace.context.Tracer;
 import cn.migu.trace.context.Tracing;
-import cn.migu.trace.reporter.AwaitableCallback;
 
 public class ControllerInterceptor extends HandlerInterceptorAdapter
 {
@@ -27,7 +26,6 @@ public class ControllerInterceptor extends HandlerInterceptorAdapter
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
         throws Exception
     {
-        
         String reqURI = request.getRequestURI();
         Boolean isErrorPage = StringUtils.endsWith(request.getRequestURI(), "/error");
         if (isErrorPage)
@@ -41,9 +39,9 @@ public class ControllerInterceptor extends HandlerInterceptorAdapter
         TraceContext traceCtx = new TraceContext();
         if (StringUtils.isNotEmpty(traceName))
         {
-            traceCtx.setSpanName(traceName);
+            traceCtx.setTraceName(traceName);
         }
-        traceCtx.setSpanName(reqURI);
+        traceCtx.setSpanName(StringUtils.join("Controller:", reqURI));
         traceCtx.setType(ReportRequestType.SR);
         tracer.addTraceContext(traceCtx);
         if (!StringUtils.isEmpty(traceId))
@@ -52,13 +50,15 @@ public class ControllerInterceptor extends HandlerInterceptorAdapter
             
             TraceContext eCtx = tracer.getCurrentTraceContext().get();
             eCtx.setTraceId(traceId);
-            eCtx.setSpanId(request.getHeader(PropagationKeys.SPAN_ID));
+            //eCtx.setSpanId(request.getHeader(PropagationKeys.SPAN_ID));
+            eCtx.setInheritedSpanId(request.getHeader(PropagationKeys.SPAN_ID));
         }
         try
         {
-            Span span = tracer.newSpan(isRootSpan);
+            Span span = tracer.newSpan(isRootSpan, "0", false);
             //System.out.println(span);
-            sendSpan(span);
+            SenderTool.sendSpan(tracer.getReporter(), span);
+            traceCtx.setSpanId(span.getSpanId());
         }
         catch (Exception e)
         {
@@ -81,9 +81,12 @@ public class ControllerInterceptor extends HandlerInterceptorAdapter
         
         String annoStr = traceCtx.getAnnotation();
         
+        String status = "0";
+        
         if (null != ex)
         {
             annoStr = ExceptionUtils.getStackTrace(ex);
+            status = "1";
         }
         
         traceCtx.setAnnotation(annoStr);
@@ -94,8 +97,8 @@ public class ControllerInterceptor extends HandlerInterceptorAdapter
             
             if (null != traceCtx)
             {
-                Span span = tracer.newSpan(false);
-                sendSpan(span);
+                Span span = tracer.newSpan(false, status, true);
+                SenderTool.sendSpan(tracer.getReporter(), span);
             }
         }
         catch (Exception e)
@@ -104,12 +107,8 @@ public class ControllerInterceptor extends HandlerInterceptorAdapter
         }
         
         request.removeAttribute(PropagationKeys.TRACER_KEY);
+        traceCtx.setAnnotation("");
+        traceCtx.setLocalParentSpanId(null);
     }
     
-    public void sendSpan(Span span)
-    {
-        AwaitableCallback callback = new AwaitableCallback();
-        tracer.getReporter().sendSpans(span, callback);
-        callback.await();
-    }
 }

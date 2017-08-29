@@ -16,6 +16,15 @@ public class TraceContext
     //调用链名称
     private String traceName = "";
     
+    //
+    private String inheritedSpanId = "";
+    
+    //
+    private String localParentSpanId = "";
+    
+    //
+    private String cacheSpanName;
+    
     //请求id
     private String spanId = "";
     
@@ -116,6 +125,36 @@ public class TraceContext
     public void setAnnotation(String annotation)
     {
         this.annotation = annotation;
+    }
+    
+    public String getCacheSpanName()
+    {
+        return cacheSpanName;
+    }
+    
+    public void setCacheSpanName(String cacheSpanName)
+    {
+        this.cacheSpanName = cacheSpanName;
+    }
+    
+    public String getInheritedSpanId()
+    {
+        return inheritedSpanId;
+    }
+    
+    public void setInheritedSpanId(String inheritedSpanId)
+    {
+        this.inheritedSpanId = inheritedSpanId;
+    }
+    
+    public String getLocalParentSpanId()
+    {
+        return localParentSpanId;
+    }
+    
+    public void setLocalParentSpanId(String localParentSpanId)
+    {
+        this.localParentSpanId = localParentSpanId;
     }
     
     @Override

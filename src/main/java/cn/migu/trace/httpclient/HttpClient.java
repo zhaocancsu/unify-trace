@@ -1,4 +1,4 @@
-package cn.migu.trace.instrument;
+package cn.migu.trace.httpclient;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -26,22 +26,43 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
-import cn.migu.trace.context.ReportRequestType;
-import cn.migu.trace.context.Span;
-import cn.migu.trace.context.TraceContext;
 import cn.migu.trace.context.Tracer;
-import cn.migu.trace.context.Tracing;
-import cn.migu.unify.comm.base.SpringContextUtil;
+import cn.migu.trace.instrument.IHttpClientInteceptor;
 
 public final class HttpClient
 {
+    //volatile private static HttpClient instance = null;
+    
+    private IHttpClientInteceptor inteceptor;
+    
+    private Tracer tracer;
+    
+    public HttpClient(Tracer tracer, IHttpClientInteceptor inteceptor)
+    {
+        this.tracer = tracer;
+        this.inteceptor = inteceptor;
+    }
+    
+    /*public static HttpClient getInstance(Tracer tracer, IHttpClientInteceptor inteceptor)
+    {
+        if (instance == null)
+        {
+            synchronized (HttpClient.class)
+            {
+                if (instance == null)
+                {
+                    instance = new HttpClient(tracer, inteceptor);
+                }
+            }
+        }
+        return instance;
+    }*/
+    
     /**
      * 请求配置
      */
     private static RequestConfig requestConfig =
         RequestConfig.custom().setSocketTimeout(10800000).setConnectTimeout(10800000).build();
-    
-    private static Tracing tracing;
     
     /**
      * http post请求
@@ -51,7 +72,7 @@ public final class HttpClient
      * @throws Exception
      * @see [类、类#方法、类#成员]
      */
-    public static String post(String url, Map<String, String> params, String serviceName)
+    public String post(String url, Map<String, String> params)
         throws Exception
     {
         List<NameValuePair> nvps = new ArrayList<NameValuePair>();
@@ -62,7 +83,7 @@ public final class HttpClient
             nvps.add(new BasicNameValuePair(key, params.get(key)));
         }
         
-        return post(url, new UrlEncodedFormEntity(nvps, StandardCharsets.UTF_8), serviceName);
+        return post(url, new UrlEncodedFormEntity(nvps, StandardCharsets.UTF_8));
     }
     
     /**
@@ -73,16 +94,19 @@ public final class HttpClient
      * @throws Exception
      * @see [类、类#方法、类#成员]
      */
-    public static String post(String url, UrlEncodedFormEntity entity, String serviceName)
+    public String post(String url, UrlEncodedFormEntity entity)
         throws Exception
     {
-        
-        return post(url, entity, requestConfig, getHeaders(), serviceName);
-        
+        return post(url, entity, requestConfig, null);
     }
     
-    public static String post(String url, UrlEncodedFormEntity entity, RequestConfig cusConfig, Header[] header,
-        String serviceName)
+    public String post(String url, UrlEncodedFormEntity entity, String traceName)
+        throws Exception
+    {
+        return post(url, entity, requestConfig, traceName);
+    }
+    
+    public String post(String url, UrlEncodedFormEntity entity, RequestConfig cusConfig, String traceName)
         throws Exception
     {
         CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -90,43 +114,11 @@ public final class HttpClient
         
         try
         {
-            Object tracingObj = SpringContextUtil.getBean(Tracing.class);
-            if (null != tracingObj)
+            List<Header> headerList = getHeadersList();
+            
+            if (null != inteceptor)
             {
-                if (null == tracing)
-                {
-                    tracing = (Tracing)tracingObj;
-                }
-                Tracer tracer = tracing.tracer();
-                TraceContext traceCtx = tracer.getCurrentTraceContext().get();
-                if (null != traceCtx)
-                {
-                    String traceId = traceCtx.getTraceId();
-                    if (StringUtils.isEmpty(traceId))
-                    {
-                        throw new NullPointerException("Trace Id Is Null");
-                    }
-                    traceCtx.setType(ReportRequestType.CS);
-                    
-                    //module name + top method
-                    
-                    traceCtx.setSpanName(StringUtils.join(tracing.serviceName()));
-                    Span span = tracer.newSpan(false);
-                    System.out.println(span);
-                }
-                else
-                {
-                    TraceContext ctx = new TraceContext();
-                    if (StringUtils.isNotEmpty(serviceName))
-                    {
-                        ctx.setSpanName(serviceName);
-                    }
-                    ctx.setSpanName(StringUtils.join(tracing.serviceName()));
-                    ctx.setType(ReportRequestType.CS);
-                    tracer.addTraceContext(ctx);
-                    Span span = tracer.newSpan(true);
-                    System.out.println(span);
-                }
+                inteceptor.preHandler(tracer, headerList, traceName);
             }
             
             httpPost = new HttpPost(url);
@@ -140,14 +132,7 @@ public final class HttpClient
                 httpPost.setConfig(requestConfig);
             }
             
-            if (null != header)
-            {
-                httpPost.setHeaders(header);
-            }
-            else
-            {
-                httpPost.setHeaders(getHeaders());
-            }
+            httpPost.setHeaders(headerList.toArray(new Header[0]));
             
             httpPost.setEntity(entity);
             
@@ -157,6 +142,11 @@ public final class HttpClient
         }
         finally
         {
+            if (null != inteceptor)
+            {
+                inteceptor.afterHandler(tracer);
+            }
+            
             if (null != httpPost)
             {
                 httpPost.releaseConnection();
@@ -165,13 +155,7 @@ public final class HttpClient
         }
     }
     
-    /**
-     * 请求head
-     * @return
-     * @throws Exception
-     * @see [类、类#方法、类#成员]
-     */
-    private static Header[] getHeaders()
+    private List<Header> getHeadersList()
     {
         ArrayList<Header> headers = new ArrayList<Header>();
         headers.add(new BasicHeader("Accept", "text/html, text/json, text/xml, html/text, */*"));
@@ -182,7 +166,7 @@ public final class HttpClient
         headers.add(new BasicHeader("Accept-Encoding", "gzip"));
         headers.add(new BasicHeader("User-Agent",
             "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 2.0.50727; CIBA)"));
-        return headers.toArray(new Header[0]);
+        return headers;
     }
     
     /**
@@ -191,7 +175,7 @@ public final class HttpClient
      * @throws Exception
      * @see [类、类#方法、类#成员]
      */
-    public static Header[] getHeaders(Map<String, String> extra)
+    public Header[] getHeaders(Map<String, String> extra)
     {
         ArrayList<Header> headers = new ArrayList<Header>();
         headers.add(new BasicHeader("Accept", "text/html, text/json, text/xml, html/text, */*"));

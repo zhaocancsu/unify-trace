@@ -13,7 +13,7 @@ public class BeanToMapTest
     public static void main(String[] args)
         throws IllegalAccessException, InvocationTargetException, NoSuchMethodException
     {
-        Span span = Span.create("1", "b", "01", "xx/a", "", "sr", "127.0.0.1", "15012312312", "");
+        Span span = Span.create("1", "", "01", "xx/a", "", "sr", "127.0.0.1", "15012312312", "", "");
         
         Map<String, String> map = BeanUtils.describe(span);
         map.remove("class");

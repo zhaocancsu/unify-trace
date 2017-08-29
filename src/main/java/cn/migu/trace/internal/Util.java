@@ -210,6 +210,28 @@ public final class Util
         }
     }
     
+    //get service top method name
+    public static String topMethodStack(StackTraceElement[] stes)
+    {
+        List<StackTraceElement> steList = new ArrayList<StackTraceElement>();
+        for (StackTraceElement ste : stes)
+        {
+            String lineStr = ste.toString();
+            if (lineStr.contains("cn.migu.unify"))
+            {
+                steList.add(ste);
+            }
+        }
+        
+        if (steList.size() > 0)
+        {
+            return steList.get(steList.size() - 1).toString();
+        }
+        
+        return "";
+        
+    }
+    
     static final char[] HEX_DIGITS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
     
     static void writeHexByte(char[] data, int pos, byte b)

@@ -21,12 +21,14 @@ public abstract class Span
     
     public abstract String getTimestamp();
     
+    public abstract String getStatus();
+    
     public abstract String getAnnotation();
     
     public static Span create(String traceId, String traceName, String spanId, String spanName, String spanParentId,
-        String type, String host, String timestamp, String annotation)
+        String type, String host, String timestamp, String status, String annotation)
     {
-        return new AutoValue_Span(traceId, traceName, spanId, spanName, spanParentId, type, host, timestamp,
+        return new AutoValue_Span(traceId, traceName, spanId, spanName, spanParentId, type, host, timestamp, status,
             annotation);
     }
     

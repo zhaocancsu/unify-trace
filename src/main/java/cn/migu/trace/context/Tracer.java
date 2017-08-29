@@ -32,13 +32,14 @@ public class Tracer
         return reporter;
     }
     
-    public Span newSpan(boolean isRoot)
+    public Span newSpan(boolean isRoot, String status, boolean isInSession)
     {
         TraceContext traceCtx = currentTraceContext.get();
         if (null == traceCtx)
         {
             throw new NullPointerException("TraceContext Is Null");
         }
+        
         if (isRoot)
         {
             String traceId = String.valueOf(Platform.get().randomLong());
@@ -51,6 +52,7 @@ public class Tracer
                 traceCtx.getType(),
                 Platform.get().hostAddr(),
                 String.valueOf(Platform.get().currentTimeMicroseconds()),
+                status,
                 traceCtx.getAnnotation());
             return span;
         }
@@ -62,15 +64,19 @@ public class Tracer
                 throw new NullPointerException("TraceId Is Null In TraceContext");
             }
             
-            String parentSpanId = traceCtx.getSpanId();
+            String parentSpanId =
+                StringUtils.isNotEmpty(traceCtx.getLocalParentSpanId()) ? traceCtx.getLocalParentSpanId()
+                    : traceCtx.getInheritedSpanId();
+            
             Span span = Span.create(traceId,
                 traceCtx.getTraceName(),
-                String.valueOf(Platform.get().randomLong()),
+                isInSession ? traceCtx.getSpanId() : String.valueOf(Platform.get().randomLong()),
                 traceCtx.getSpanName(),
                 parentSpanId,
                 traceCtx.getType(),
                 Platform.get().hostAddr(),
                 String.valueOf(Platform.get().currentTimeMicroseconds()),
+                status,
                 traceCtx.getAnnotation());
             return span;
             
