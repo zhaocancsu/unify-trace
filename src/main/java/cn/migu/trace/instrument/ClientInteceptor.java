@@ -1,5 +1,6 @@
 package cn.migu.trace.instrument;
 
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -48,9 +49,6 @@ public class ClientInteceptor implements IClientInteceptor
                 }
             }
             
-            System.out.println("HttpClient Thread id:" + Thread.currentThread().getId() + ",TraceContext="
-                + tracer.getCurrentTraceContext().get().hashCode() + ",ctx=" + tracer.getCurrentTraceContext().get());
-            
             String traceId = traceCtx.getTraceId();
             if (StringUtils.isEmpty(traceId))
             {
@@ -79,10 +77,7 @@ public class ClientInteceptor implements IClientInteceptor
             
             headers.add(new BasicHeader(PropagationKeys.TRACE_ID, traceId));
             headers.add(new BasicHeader(PropagationKeys.SPAN_ID, span.getSpanId()));
-            if (StringUtils.isNotEmpty(traceCtx.getTraceName()))
-            {
-                headers.add(new BasicHeader(PropagationKeys.TRACE_NAME, traceCtx.getTraceName()));
-            }
+            addTraceNameToHeader(traceCtx, headers);
             
         }
         else
@@ -108,10 +103,7 @@ public class ClientInteceptor implements IClientInteceptor
             
             headers.add(new BasicHeader(PropagationKeys.TRACE_ID, span.getTraceId()));
             headers.add(new BasicHeader(PropagationKeys.SPAN_ID, span.getSpanId()));
-            if (StringUtils.isNotEmpty(span.getTraceName()))
-            {
-                headers.add(new BasicHeader(PropagationKeys.TRACE_NAME, span.getTraceName()));
-            }
+            addTraceNameToHeader(ctx, headers);
         }
         
     }
@@ -147,8 +139,6 @@ public class ClientInteceptor implements IClientInteceptor
                 traceCtx.setCacheSpanName("");
             }
             
-            System.out.println("HttpClient Thread id:" + Thread.currentThread().getId() + ",TraceContext="
-                + tracer.getCurrentTraceContext().get().hashCode() + ",ctx=" + tracer.getCurrentTraceContext().get());
         }
     }
     
@@ -183,8 +173,22 @@ public class ClientInteceptor implements IClientInteceptor
                 traceCtx.setCacheSpanName("");
             }
             
-            System.out.println("HttpClient Thread id:" + Thread.currentThread().getId() + ",TraceContext="
-                + tracer.getCurrentTraceContext().get().hashCode() + ",ctx=" + tracer.getCurrentTraceContext().get());
+        }
+    }
+    
+    private void addTraceNameToHeader(TraceContext traceCtx, List<Header> headers)
+    {
+        if (StringUtils.isNotEmpty(traceCtx.getTraceName()))
+        {
+            try
+            {
+                headers.add(new BasicHeader(PropagationKeys.TRACE_NAME,
+                    new String(traceCtx.getTraceName().getBytes(), "iso-8859-1")));
+            }
+            catch (UnsupportedEncodingException e)
+            {
+                e.printStackTrace();
+            }
         }
     }
     

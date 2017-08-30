@@ -59,6 +59,21 @@ public final class HttpClient
     public String post(String url, Map<String, String> params)
         throws Exception
     {
+        return post(url, params, null);
+    }
+    
+    /**
+     * http post请求
+     * @param url
+     * @param params
+     * @param traceName
+     * @return
+     * @throws Exception
+     * @see [类、类#方法、类#成员]
+     */
+    public String post(String url, Map<String, String> params, String traceName)
+        throws Exception
+    {
         List<NameValuePair> nvps = new ArrayList<NameValuePair>();
         
         Set<String> keySet = params.keySet();
@@ -67,7 +82,7 @@ public final class HttpClient
             nvps.add(new BasicNameValuePair(key, params.get(key)));
         }
         
-        return post(url, new UrlEncodedFormEntity(nvps, StandardCharsets.UTF_8));
+        return post(url, new UrlEncodedFormEntity(nvps, StandardCharsets.UTF_8), traceName);
     }
     
     /**
@@ -102,7 +117,15 @@ public final class HttpClient
             
             if (null != inteceptor)
             {
-                inteceptor.preHandler(tracer, headerList, traceName);
+                try
+                {
+                    inteceptor.preHandler(tracer, headerList, traceName);
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+                
             }
             
             httpPost = new HttpPost(url);
@@ -128,7 +151,14 @@ public final class HttpClient
         {
             if (null != inteceptor)
             {
-                inteceptor.afterHandler(tracer);
+                try
+                {
+                    inteceptor.afterHandler(tracer);
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
             }
             
             if (null != httpPost)
@@ -148,6 +178,7 @@ public final class HttpClient
         headers.add(new BasicHeader("Connection", "keep-alive"));
         headers.add(new BasicHeader("Cache-Control", "no-cache"));
         headers.add(new BasicHeader("Accept-Encoding", "gzip"));
+        headers.add(new BasicHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8"));
         headers.add(new BasicHeader("User-Agent",
             "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 2.0.50727; CIBA)"));
         return headers;

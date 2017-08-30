@@ -1,5 +1,7 @@
 package cn.migu.trace.instrument;
 
+import java.io.UnsupportedEncodingException;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -24,7 +26,6 @@ public class ControllerInterceptor extends HandlerInterceptorAdapter
     }
     
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
-        throws Exception
     {
         String reqURI = request.getRequestURI();
         Boolean isErrorPage = StringUtils.endsWith(request.getRequestURI(), "/error");
@@ -34,7 +35,16 @@ public class ControllerInterceptor extends HandlerInterceptorAdapter
         }
         
         String traceId = request.getHeader(PropagationKeys.TRACE_ID);
-        String traceName = request.getHeader(PropagationKeys.TRACE_NAME);
+        String midTraceName = request.getHeader(PropagationKeys.TRACE_NAME);
+        String traceName = "";
+        try
+        {
+            traceName = new String(midTraceName.getBytes("iso-8859-1"), "UTF-8");
+        }
+        catch (UnsupportedEncodingException e1)
+        {
+            e1.printStackTrace();
+        }
         boolean isRootSpan = true;
         TraceContext traceCtx = new TraceContext();
         if (StringUtils.isNotEmpty(traceName))
@@ -50,7 +60,7 @@ public class ControllerInterceptor extends HandlerInterceptorAdapter
             
             TraceContext eCtx = tracer.getCurrentTraceContext().get();
             eCtx.setTraceId(traceId);
-            //eCtx.setSpanId(request.getHeader(PropagationKeys.SPAN_ID));
+            
             eCtx.setInheritedSpanId(request.getHeader(PropagationKeys.SPAN_ID));
         }
         try
@@ -65,15 +75,11 @@ public class ControllerInterceptor extends HandlerInterceptorAdapter
             e.printStackTrace();
         }
         
-        System.out.println("Controller Thread id:" + Thread.currentThread().getId() + ",TraceContext="
-            + tracer.getCurrentTraceContext().get().hashCode() + ",ctx=" + tracer.getCurrentTraceContext().get());
-        
         request.setAttribute(PropagationKeys.TRACER_KEY, tracer);
         return true;
     }
     
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
-        throws Exception
     {
         if (StringUtils.endsWith(request.getRequestURI(), "/error"))
         {
@@ -113,8 +119,6 @@ public class ControllerInterceptor extends HandlerInterceptorAdapter
         traceCtx.setAnnotation("");
         traceCtx.setLocalParentSpanId(null);
         
-        System.out.println("Controller Thread id:" + Thread.currentThread().getId() + ",TraceContext="
-            + tracer.getCurrentTraceContext().get().hashCode() + ",ctx=" + tracer.getCurrentTraceContext().get());
     }
     
 }
