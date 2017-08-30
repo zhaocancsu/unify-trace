@@ -6,7 +6,7 @@ import org.apache.http.Header;
 
 import cn.migu.trace.context.Tracer;
 
-public interface IHttpClientInteceptor
+public interface IClientInteceptor
 {
     void preHandler(Tracer tracer, List<Header> headers, String traceName);
     

@@ -65,6 +65,9 @@ public class ControllerInterceptor extends HandlerInterceptorAdapter
             e.printStackTrace();
         }
         
+        System.out.println("Controller Thread id:" + Thread.currentThread().getId() + ",TraceContext="
+            + tracer.getCurrentTraceContext().get().hashCode() + ",ctx=" + tracer.getCurrentTraceContext().get());
+        
         request.setAttribute(PropagationKeys.TRACER_KEY, tracer);
         return true;
     }
@@ -109,6 +112,9 @@ public class ControllerInterceptor extends HandlerInterceptorAdapter
         request.removeAttribute(PropagationKeys.TRACER_KEY);
         traceCtx.setAnnotation("");
         traceCtx.setLocalParentSpanId(null);
+        
+        System.out.println("Controller Thread id:" + Thread.currentThread().getId() + ",TraceContext="
+            + tracer.getCurrentTraceContext().get().hashCode() + ",ctx=" + tracer.getCurrentTraceContext().get());
     }
     
 }

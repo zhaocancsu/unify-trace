@@ -14,11 +14,11 @@ import cn.migu.trace.context.TraceContext;
 import cn.migu.trace.context.Tracer;
 import cn.migu.trace.internal.Util;
 
-public class HttpClientInteceptor implements IHttpClientInteceptor
+public class ClientInteceptor implements IClientInteceptor
 {
     private String serviceName;
     
-    public HttpClientInteceptor(String serviceName)
+    public ClientInteceptor(String serviceName)
     {
         this.serviceName = serviceName;
     }
@@ -27,8 +27,30 @@ public class HttpClientInteceptor implements IHttpClientInteceptor
     public void preHandler(Tracer tracer, List<Header> headers, String traceName)
     {
         TraceContext traceCtx = tracer.getCurrentTraceContext().get();
+        
         if (null != traceCtx)
         {
+            
+            long currentThreadId = Thread.currentThread().getId();
+            if (currentThreadId != traceCtx.getThreadId())
+            {
+                try
+                {
+                    TraceContext childCtx = (TraceContext)traceCtx.clone();
+                    
+                    tracer.getCurrentTraceContext().newScope(childCtx);
+                    
+                    traceCtx = childCtx;
+                }
+                catch (CloneNotSupportedException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+            
+            System.out.println("HttpClient Thread id:" + Thread.currentThread().getId() + ",TraceContext="
+                + tracer.getCurrentTraceContext().get().hashCode() + ",ctx=" + tracer.getCurrentTraceContext().get());
+            
             String traceId = traceCtx.getTraceId();
             if (StringUtils.isEmpty(traceId))
             {
@@ -124,6 +146,9 @@ public class HttpClientInteceptor implements IHttpClientInteceptor
                 traceCtx.setSpanName(traceCtx.getCacheSpanName());
                 traceCtx.setCacheSpanName("");
             }
+            
+            System.out.println("HttpClient Thread id:" + Thread.currentThread().getId() + ",TraceContext="
+                + tracer.getCurrentTraceContext().get().hashCode() + ",ctx=" + tracer.getCurrentTraceContext().get());
         }
     }
     
@@ -157,6 +182,9 @@ public class HttpClientInteceptor implements IHttpClientInteceptor
                 traceCtx.setSpanName(traceCtx.getCacheSpanName());
                 traceCtx.setCacheSpanName("");
             }
+            
+            System.out.println("HttpClient Thread id:" + Thread.currentThread().getId() + ",TraceContext="
+                + tracer.getCurrentTraceContext().get().hashCode() + ",ctx=" + tracer.getCurrentTraceContext().get());
         }
     }
     

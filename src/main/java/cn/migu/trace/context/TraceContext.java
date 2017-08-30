@@ -8,8 +8,10 @@ package cn.migu.trace.context;
  * @see  [相关类/方法]
  * @since  [产品/模块版本]
  */
-public class TraceContext
+public class TraceContext implements Cloneable
 {
+    private final long threadId;
+    
     //调用链id
     private String traceId;
     
@@ -42,10 +44,10 @@ public class TraceContext
     
     public TraceContext()
     {
-        
+        this.threadId = Thread.currentThread().getId();
     }
     
-    public TraceContext(String traceId, String traceName, String spanId, String spanName, String type, String host,
+    /*public TraceContext(String traceId, String traceName, String spanId, String spanName, String type, String host,
         String annotation)
     {
         this.traceId = traceId;
@@ -55,7 +57,7 @@ public class TraceContext
         this.type = type;
         this.host = host;
         this.annotation = annotation;
-    }
+    }*/
     
     public String getTraceId()
     {
@@ -155,6 +157,18 @@ public class TraceContext
     public void setLocalParentSpanId(String localParentSpanId)
     {
         this.localParentSpanId = localParentSpanId;
+    }
+    
+    public long getThreadId()
+    {
+        return threadId;
+    }
+    
+    @Override
+    public Object clone()
+        throws CloneNotSupportedException
+    {
+        return super.clone();
     }
     
     @Override

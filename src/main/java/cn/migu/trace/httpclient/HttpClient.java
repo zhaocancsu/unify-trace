@@ -27,36 +27,20 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
 import cn.migu.trace.context.Tracer;
-import cn.migu.trace.instrument.IHttpClientInteceptor;
+import cn.migu.trace.instrument.IClientInteceptor;
 
 public final class HttpClient
 {
-    //volatile private static HttpClient instance = null;
     
-    private IHttpClientInteceptor inteceptor;
+    private IClientInteceptor inteceptor;
     
     private Tracer tracer;
     
-    public HttpClient(Tracer tracer, IHttpClientInteceptor inteceptor)
+    public HttpClient(Tracer tracer, IClientInteceptor inteceptor)
     {
         this.tracer = tracer;
         this.inteceptor = inteceptor;
     }
-    
-    /*public static HttpClient getInstance(Tracer tracer, IHttpClientInteceptor inteceptor)
-    {
-        if (instance == null)
-        {
-            synchronized (HttpClient.class)
-            {
-                if (instance == null)
-                {
-                    instance = new HttpClient(tracer, inteceptor);
-                }
-            }
-        }
-        return instance;
-    }*/
     
     /**
      * 请求配置
