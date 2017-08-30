@@ -45,7 +45,7 @@
 			<groupId>org.apache.servicemix.bundles</groupId>
 			<artifactId>org.apache.servicemix.bundles.jsr305</artifactId>
 			<version>3.0.2_1</version>
-			<scope>provided</scope>
+			<!-- <scope>provided</scope>-->
 		</dependency>
 
 		<dependency>
