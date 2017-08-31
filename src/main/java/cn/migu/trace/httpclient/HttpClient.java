@@ -117,15 +117,7 @@ public final class HttpClient
             
             if (null != inteceptor)
             {
-                try
-                {
-                    inteceptor.preHandler(tracer, headerList, traceName);
-                }
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
-                
+                inteceptor.preHandler(tracer, headerList, traceName);
             }
             
             httpPost = new HttpPost(url);
@@ -143,24 +135,13 @@ public final class HttpClient
             
             httpPost.setEntity(entity);
             
-            String result = httpClient.execute(httpPost, new ResponseHandlerImpl(StandardCharsets.UTF_8.toString()));
+            String result = httpClient.execute(httpPost,
+                new ResponseHandlerImpl(StandardCharsets.UTF_8.toString(), inteceptor, tracer));
             
             return result;
         }
         finally
         {
-            if (null != inteceptor)
-            {
-                try
-                {
-                    inteceptor.afterHandler(tracer);
-                }
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
-            }
-            
             if (null != httpPost)
             {
                 httpPost.releaseConnection();
@@ -221,8 +202,14 @@ class ResponseHandlerImpl implements ResponseHandler<String>
     
     private String encode;
     
-    public ResponseHandlerImpl(String encode)
+    private IClientInteceptor inteceptor;
+    
+    private Tracer tracer;
+    
+    public ResponseHandlerImpl(String encode, IClientInteceptor inteceptor, Tracer tracer)
     {
+        this.tracer = tracer;
+        this.inteceptor = inteceptor;
         this.encode = encode;
     }
     
@@ -239,11 +226,22 @@ class ResponseHandlerImpl implements ResponseHandler<String>
             HttpEntity entity = response.getEntity();
             
             responseBody = (entity != null ? EntityUtils.toString(entity, this.encode) : null);
+            
+            if (null != this.inteceptor)
+            {
+                inteceptor.afterHandler(tracer, responseBody);
+            }
         }
         else
         {
-            throw new HttpResponseException(statusLine.getStatusCode(),
+            HttpResponseException excep = new HttpResponseException(statusLine.getStatusCode(),
                 StringUtils.join(String.valueOf(statusLine.getStatusCode()), ":", statusLine.getReasonPhrase()));
+            if (null != this.inteceptor)
+            {
+                inteceptor.afterExcepHandler(tracer, excep);
+            }
+            
+            throw excep;
         }
         
         return responseBody;

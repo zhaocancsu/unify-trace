@@ -10,7 +10,7 @@ public interface IClientInteceptor
 {
     void preHandler(Tracer tracer, List<Header> headers, String traceName);
     
-    void afterHandler(Tracer tracer);
+    void afterHandler(Tracer tracer, String anno);
     
     void afterExcepHandler(Tracer tracer, Throwable e);
 }

@@ -71,7 +71,6 @@ public class ClientInteceptor implements IClientInteceptor
             }
             
             Span span = tracer.newSpan(false, "0", false);
-            //System.out.println(span);
             SenderTool.sendSpan(tracer.getReporter(), span);
             traceCtx.setSpanId(span.getSpanId());
             
@@ -98,7 +97,6 @@ public class ClientInteceptor implements IClientInteceptor
             tracer.addTraceContext(ctx);
             Span span = tracer.newSpan(true, "0", false);
             ctx.setSpanId(span.getSpanId());
-            //System.out.println(span);
             SenderTool.sendSpan(tracer.getReporter(), span);
             
             headers.add(new BasicHeader(PropagationKeys.TRACE_ID, span.getTraceId()));
@@ -109,11 +107,15 @@ public class ClientInteceptor implements IClientInteceptor
     }
     
     @Override
-    public void afterHandler(Tracer tracer)
+    public void afterHandler(Tracer tracer, String anno)
     {
         TraceContext traceCtx = tracer.getCurrentTraceContext().get();
         if (null != traceCtx)
         {
+            if (StringUtils.isNotEmpty(anno))
+            {
+                traceCtx.setAnnotation(anno);
+            }
             String traceId = traceCtx.getTraceId();
             if (StringUtils.isEmpty(traceId))
             {
@@ -123,7 +125,7 @@ public class ClientInteceptor implements IClientInteceptor
             
             //module name + top method
             Span span = tracer.newSpan(false, "0", true);
-            //System.out.println(span);
+            
             SenderTool.sendSpan(tracer.getReporter(), span);
             
             traceCtx.setAnnotation("");
@@ -157,8 +159,7 @@ public class ClientInteceptor implements IClientInteceptor
             
             //module name + top method
             traceCtx.setAnnotation(ExceptionUtils.getStackTrace(e));
-            Span span = tracer.newSpan(false, "0", true);
-            //System.out.println(span);
+            Span span = tracer.newSpan(false, "1", true);
             SenderTool.sendSpan(tracer.getReporter(), span);
             traceCtx.setAnnotation("");
             if (StringUtils.isNotEmpty(traceCtx.getLocalParentSpanId()))
