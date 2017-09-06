@@ -58,7 +58,7 @@ public class ClientInteceptor implements IClientInteceptor
             
             //module name + top method
             String spanName = StringUtils
-                .join(serviceName, ":", Util.topMethodStack(Thread.currentThread().getStackTrace()), "->http client");
+                .join(serviceName, "&HttpClient:", Util.topMethodStack(Thread.currentThread().getStackTrace()));
             if (!StringUtils.isEmpty(traceCtx.getSpanName()))
             {
                 traceCtx.setCacheSpanName(traceCtx.getSpanName());
@@ -90,8 +90,9 @@ public class ClientInteceptor implements IClientInteceptor
             {
                 ctx.setTraceName(traceName);
             }
+            ctx.setInstantaneous(true);
             String spanName = StringUtils
-                .join(serviceName, ":", Util.topMethodStack(Thread.currentThread().getStackTrace()), "->httpclient");
+                .join(serviceName, "&HttpClient:", Util.topMethodStack(Thread.currentThread().getStackTrace()));
             ctx.setSpanName(spanName);
             ctx.setType(ReportRequestType.CS);
             tracer.addTraceContext(ctx);
@@ -127,18 +128,24 @@ public class ClientInteceptor implements IClientInteceptor
             Span span = tracer.newSpan(false, "0", true);
             
             SenderTool.sendSpan(tracer.getReporter(), span);
-            
-            traceCtx.setAnnotation("");
-            if (StringUtils.isNotEmpty(traceCtx.getLocalParentSpanId()))
+            if (traceCtx.isInstantaneous())
             {
-                traceCtx.setSpanId(traceCtx.getLocalParentSpanId());
-                traceCtx.setLocalParentSpanId(null);
+                tracer.getCurrentTraceContext().newScope(null);
             }
-            
-            if (StringUtils.isNotEmpty(traceCtx.getCacheSpanName()))
+            else
             {
-                traceCtx.setSpanName(traceCtx.getCacheSpanName());
-                traceCtx.setCacheSpanName("");
+                traceCtx.setAnnotation("");
+                if (StringUtils.isNotEmpty(traceCtx.getLocalParentSpanId()))
+                {
+                    traceCtx.setSpanId(traceCtx.getLocalParentSpanId());
+                    traceCtx.setLocalParentSpanId(null);
+                }
+                
+                if (StringUtils.isNotEmpty(traceCtx.getCacheSpanName()))
+                {
+                    traceCtx.setSpanName(traceCtx.getCacheSpanName());
+                    traceCtx.setCacheSpanName("");
+                }
             }
             
         }
@@ -161,17 +168,25 @@ public class ClientInteceptor implements IClientInteceptor
             traceCtx.setAnnotation(ExceptionUtils.getStackTrace(e));
             Span span = tracer.newSpan(false, "1", true);
             SenderTool.sendSpan(tracer.getReporter(), span);
-            traceCtx.setAnnotation("");
-            if (StringUtils.isNotEmpty(traceCtx.getLocalParentSpanId()))
-            {
-                traceCtx.setSpanId(traceCtx.getLocalParentSpanId());
-                traceCtx.setLocalParentSpanId(null);
-            }
             
-            if (StringUtils.isNotEmpty(traceCtx.getCacheSpanName()))
+            if (traceCtx.isInstantaneous())
             {
-                traceCtx.setSpanName(traceCtx.getCacheSpanName());
-                traceCtx.setCacheSpanName("");
+                tracer.getCurrentTraceContext().newScope(null);
+            }
+            else
+            {
+                traceCtx.setAnnotation("");
+                if (StringUtils.isNotEmpty(traceCtx.getLocalParentSpanId()))
+                {
+                    traceCtx.setSpanId(traceCtx.getLocalParentSpanId());
+                    traceCtx.setLocalParentSpanId(null);
+                }
+                
+                if (StringUtils.isNotEmpty(traceCtx.getCacheSpanName()))
+                {
+                    traceCtx.setSpanName(traceCtx.getCacheSpanName());
+                    traceCtx.setCacheSpanName("");
+                }
             }
             
         }

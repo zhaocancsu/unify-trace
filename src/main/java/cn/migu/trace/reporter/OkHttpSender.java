@@ -37,21 +37,13 @@ public abstract class OkHttpSender implements Sender
     
     public static Builder builder()
     {
-        return new AutoValue_OkHttpSender.Builder()
-            //.compressionEnabled(true)
-            .maxRequests(64)
-            .messageMaxBytes(5 * 1024 * 1024);
+        return new AutoValue_OkHttpSender.Builder().maxRequests(64).messageMaxBytes(5 * 1024 * 1024);
     }
     
     @AutoValue.Builder
     public static abstract class Builder
     {
         
-        /**
-         * No default. The POST URL for zipkin's <a href="http://zipkin.io/zipkin-api/#/">v1 api</a>,
-         * usually "http://zipkinhost:9411/api/v1/spans"
-         */
-        // customizable so that users can re-map /api/v1/spans ex for browser-originated traces
         public final Builder endpoint(String endpoint)
         {
             checkNotNull(endpoint, "endpoint ex: http://traceserver:8080/tracing/span");
@@ -62,32 +54,19 @@ public abstract class OkHttpSender implements Sender
         
         public abstract Builder endpoint(HttpUrl endpoint);
         
-        /** Default true. true implies that spans will be gzipped before transport. */
-        //public abstract Builder compressionEnabled(boolean compressSpans);
-        
         /** Maximum size of a message. Default 5MiB */
         public abstract Builder messageMaxBytes(int messageMaxBytes);
         
         /** Maximum in-flight requests. Default 64 */
         public abstract Builder maxRequests(int maxRequests);
         
-        /** Controls the "Content-Type" header when sending spans. */
-        //public abstract Builder encoding(Encoding encoding);
-        
         public abstract OkHttpClient.Builder clientBuilder();
         
         abstract int maxRequests();
         
-        //abstract Encoding encoding();
-        
         public final OkHttpSender build()
         {
-            // bound the executor so that we get consistent performance
             ThreadPoolExecutor dispatchExecutor = new ThreadPoolExecutor(0, maxRequests(), 60, TimeUnit.SECONDS,
-                // Using a synchronous queue means messages will send immediately until we hit max
-                // in-flight requests. Once max requests are hit, send will block the caller, which is
-                // the AsyncReporter flush thread. This is ok, as the AsyncReporter has a buffer of
-                // unsent spans for this purpose.
                 new SynchronousQueue<>(), Util.threadFactory("OkHttpSender Dispatcher", false));
             Dispatcher dispatcher = new Dispatcher(dispatchExecutor);
             dispatcher.setMaxRequests(maxRequests());
@@ -95,18 +74,8 @@ public abstract class OkHttpSender implements Sender
             clientBuilder().dispatcher(dispatcher).build();
             
             return this.autoBuild();
-            /*if (encoding() == Encoding.JSON)
-            {
-                return encoder(RequestBodyMessageEncoder.JSON).autoBuild();
-            }
-            else if (encoding() == Encoding.THRIFT)
-            {
-                return encoder(RequestBodyMessageEncoder.THRIFT).autoBuild();
-            }
-            throw new UnsupportedOperationException("Unsupported encoding: " + encoding().name());*/
+            
         }
-        
-        //abstract Builder encoder(RequestBodyMessageEncoder encoder);
         
         abstract OkHttpSender autoBuild();
         
@@ -115,16 +84,10 @@ public abstract class OkHttpSender implements Sender
         }
     }
     
-    /**
-     * Creates a builder out of this object. Note: if the {@link Builder#clientBuilder()} was
-     * customized, you'll need to re-apply those customizations.
-     */
     public final Builder toBuilder()
     {
         return new AutoValue_OkHttpSender.Builder().endpoint(endpoint())
             .maxRequests(client().dispatcher().getMaxRequests())
-            //.compressionEnabled(compressionEnabled())
-            //.encoding(encoding())
             .messageMaxBytes(messageMaxBytes());
     }
     
@@ -134,20 +97,8 @@ public abstract class OkHttpSender implements Sender
     
     abstract int maxRequests();
     
-    //abstract boolean compressionEnabled();
-    
-    //abstract RequestBodyMessageEncoder encoder();
-    
-    /*@Override
-    public int messageSizeInBytes(List<byte[]> encodedSpans)
-    {
-        return encoding().listSizeInBytes(encodedSpans);
-    }*/
-    
-    /** close is typically called from a different thread */
     volatile boolean closeCalled;
     
-    /** Asynchronously sends the spans as a POST to {@link #endpoint()}. */
     @Override
     public void sendSpans(Span span, Callback callback)
     {
@@ -179,7 +130,6 @@ public abstract class OkHttpSender implements Sender
         }
     }
     
-    /** Sends an empty json message to the configured endpoint. */
     @Override
     public CheckResult check()
     {
@@ -203,7 +153,6 @@ public abstract class OkHttpSender implements Sender
         }
     }
     
-    /** Waits up to a second for in-flight requests to finish before cancelling them */
     @Override
     public void close()
     {
@@ -230,15 +179,7 @@ public abstract class OkHttpSender implements Sender
         throws IOException
     {
         Request.Builder request = new Request.Builder().url(endpoint());
-        /*if (compressionEnabled())
-        {
-            request.addHeader("Content-Encoding", "gzip");
-            Buffer gzipped = new Buffer();
-            BufferedSink gzipSink = Okio.buffer(new GzipSink(gzipped));
-            body.writeTo(gzipSink);
-            gzipSink.close();
-            body = new BufferRequestBody(body.contentType(), gzipped);
-        }*/
+        
         request.post(body);
         return request.build();
     }
@@ -252,39 +193,6 @@ public abstract class OkHttpSender implements Sender
     OkHttpSender()
     {
     }
-    
-    /*static final class BufferRequestBody extends RequestBody
-    {
-        final MediaType contentType;
-        
-        final Buffer body;
-        
-        BufferRequestBody(MediaType contentType, Buffer body)
-        {
-            this.contentType = contentType;
-            this.body = body;
-        }
-        
-        @Override
-        public long contentLength()
-            throws IOException
-        {
-            return body.size();
-        }
-        
-        @Override
-        public MediaType contentType()
-        {
-            return contentType;
-        }
-        
-        @Override
-        public void writeTo(BufferedSink sink)
-            throws IOException
-        {
-            sink.write(body, body.size());
-        }
-    }*/
     
     static final class CallbackAdapter implements okhttp3.Callback
     {

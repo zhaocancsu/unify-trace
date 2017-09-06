@@ -42,6 +42,8 @@ public class TraceContext implements Cloneable
     //额外注释
     private String annotation = "";
     
+    private boolean instantaneous = false;
+    
     public TraceContext()
     {
         this.threadId = Thread.currentThread().getId();
@@ -169,6 +171,16 @@ public class TraceContext implements Cloneable
         throws CloneNotSupportedException
     {
         return super.clone();
+    }
+    
+    public boolean isInstantaneous()
+    {
+        return instantaneous;
+    }
+    
+    public void setInstantaneous(boolean instantaneous)
+    {
+        this.instantaneous = instantaneous;
     }
     
     @Override

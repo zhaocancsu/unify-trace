@@ -20,9 +20,12 @@ public class ControllerInterceptor extends HandlerInterceptorAdapter
 {
     final Tracer tracer;
     
+    final String serviceName;
+    
     public ControllerInterceptor(Tracing tracing)
     {
         this.tracer = tracing.tracer();
+        this.serviceName = tracing.serviceName();
     }
     
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
@@ -51,7 +54,7 @@ public class ControllerInterceptor extends HandlerInterceptorAdapter
         {
             traceCtx.setTraceName(traceName);
         }
-        traceCtx.setSpanName(StringUtils.join("Controller:", reqURI));
+        traceCtx.setSpanName(StringUtils.join(serviceName, "&Controller:", reqURI));
         traceCtx.setType(ReportRequestType.SR);
         tracer.addTraceContext(traceCtx);
         if (!StringUtils.isEmpty(traceId))
@@ -116,8 +119,10 @@ public class ControllerInterceptor extends HandlerInterceptorAdapter
         }
         
         request.removeAttribute(PropagationKeys.TRACER_KEY);
-        traceCtx.setAnnotation("");
-        traceCtx.setLocalParentSpanId(null);
+        //traceCtx.setAnnotation("");
+        //traceCtx.setLocalParentSpanId(null);
+        
+        tracer.getCurrentTraceContext().newScope(null);
         
     }
     
