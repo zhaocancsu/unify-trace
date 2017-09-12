@@ -3,9 +3,11 @@ package cn.migu.trace.httpclient;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
@@ -20,11 +22,14 @@ import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+
+import com.google.common.base.Joiner;
 
 import cn.migu.trace.context.Tracer;
 import cn.migu.trace.instrument.IClientInteceptor;
@@ -117,7 +122,8 @@ public final class HttpClient
             
             if (null != inteceptor)
             {
-                inteceptor.preHandler(tracer, headerList, traceName);
+                String anno = StringUtils.join("request url:", url, " post parameters:", parseParameters(entity));
+                inteceptor.preHandler(tracer, headerList, traceName, "HttpClient", anno);
             }
             
             httpPost = new HttpPost(url);
@@ -139,6 +145,18 @@ public final class HttpClient
                 new ResponseHandlerImpl(StandardCharsets.UTF_8.toString(), inteceptor, tracer));
             
             return result;
+        }
+        catch (Exception e)
+        {
+            if (!(e instanceof HttpResponseException))
+            {
+                if (null != this.inteceptor)
+                {
+                    inteceptor.afterExcepHandler(tracer, e);
+                }
+            }
+            
+            throw e;
         }
         finally
         {
@@ -191,6 +209,36 @@ public final class HttpClient
         }
         
         return headers.toArray(new Header[0]);
+    }
+    
+    private String parseParameters(UrlEncodedFormEntity entity)
+    {
+        Map<String, String> postForm = new HashMap<String, String>();
+        
+        try
+        {
+            List<NameValuePair> nvps = URLEncodedUtils.parse(entity);
+            for (NameValuePair nvp : nvps)
+            {
+                postForm.put(nvp.getName(), nvp.getValue());
+            }
+        }
+        catch (IOException e)
+        {
+            
+            e.printStackTrace();
+            return null;
+        }
+        
+        if (postForm.size() > 0)
+        {
+            Map<String, String> filteMap =
+                postForm.entrySet().stream().filter(e -> StringUtils.isNotEmpty(e.getValue())).collect(
+                    Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
+            return Joiner.on("|").withKeyValueSeparator(":").join(filteMap);
+        }
+        
+        return "";
     }
 }
 

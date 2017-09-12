@@ -25,10 +25,9 @@ public class ClientInteceptor implements IClientInteceptor
     }
     
     @Override
-    public void preHandler(Tracer tracer, List<Header> headers, String traceName)
+    public void preHandler(Tracer tracer, List<Header> headers, String traceName, String funcInfixSpanName, String anno)
     {
         TraceContext traceCtx = tracer.getCurrentTraceContext().get();
-        
         if (null != traceCtx)
         {
             
@@ -57,8 +56,11 @@ public class ClientInteceptor implements IClientInteceptor
             traceCtx.setType(ReportRequestType.CS);
             
             //module name + top method
-            String spanName = StringUtils
-                .join(serviceName, "&HttpClient:", Util.topMethodStack(Thread.currentThread().getStackTrace()));
+            String spanName = StringUtils.join(serviceName,
+                "&",
+                funcInfixSpanName,
+                " ",
+                Util.topMethodStack(Thread.currentThread().getStackTrace()));
             if (!StringUtils.isEmpty(traceCtx.getSpanName()))
             {
                 traceCtx.setCacheSpanName(traceCtx.getSpanName());
@@ -70,13 +72,21 @@ public class ClientInteceptor implements IClientInteceptor
                 traceCtx.setLocalParentSpanId(traceCtx.getSpanId());
             }
             
+            if (StringUtils.isNotEmpty(anno))
+            {
+                traceCtx.setAnnotation(anno);
+            }
+            
             Span span = tracer.newSpan(false, "0", false);
             SenderTool.sendSpan(tracer.getReporter(), span);
             traceCtx.setSpanId(span.getSpanId());
             
-            headers.add(new BasicHeader(PropagationKeys.TRACE_ID, traceId));
-            headers.add(new BasicHeader(PropagationKeys.SPAN_ID, span.getSpanId()));
-            addTraceNameToHeader(traceCtx, headers);
+            if (null != headers)
+            {
+                headers.add(new BasicHeader(PropagationKeys.TRACE_ID, traceId));
+                headers.add(new BasicHeader(PropagationKeys.SPAN_ID, span.getSpanId()));
+                addTraceNameToHeader(traceCtx, headers);
+            }
             
         }
         else
@@ -91,18 +101,29 @@ public class ClientInteceptor implements IClientInteceptor
                 ctx.setTraceName(traceName);
             }
             ctx.setInstantaneous(true);
-            String spanName = StringUtils
-                .join(serviceName, "&HttpClient:", Util.topMethodStack(Thread.currentThread().getStackTrace()));
+            String spanName = StringUtils.join(serviceName,
+                "&",
+                funcInfixSpanName,
+                " ",
+                Util.topMethodStack(Thread.currentThread().getStackTrace()));
             ctx.setSpanName(spanName);
             ctx.setType(ReportRequestType.CS);
             tracer.addTraceContext(ctx);
-            Span span = tracer.newSpan(true, "0", false);
+            if (StringUtils.isNotEmpty(anno))
+            {
+                ctx.setAnnotation(anno);
+            }
+            Span span = tracer.newSpan(true, "0", true);
             ctx.setSpanId(span.getSpanId());
             SenderTool.sendSpan(tracer.getReporter(), span);
             
-            headers.add(new BasicHeader(PropagationKeys.TRACE_ID, span.getTraceId()));
-            headers.add(new BasicHeader(PropagationKeys.SPAN_ID, span.getSpanId()));
-            addTraceNameToHeader(ctx, headers);
+            if (null != headers)
+            {
+                headers.add(new BasicHeader(PropagationKeys.TRACE_ID, span.getTraceId()));
+                headers.add(new BasicHeader(PropagationKeys.SPAN_ID, span.getSpanId()));
+                addTraceNameToHeader(ctx, headers);
+            }
+            
         }
         
     }

@@ -42,7 +42,10 @@ public class ControllerInterceptor extends HandlerInterceptorAdapter
         String traceName = "";
         try
         {
-            traceName = new String(midTraceName.getBytes("iso-8859-1"), "UTF-8");
+            if (StringUtils.isNotEmpty(midTraceName))
+            {
+                traceName = new String(midTraceName.getBytes("iso-8859-1"), "UTF-8");
+            }
         }
         catch (UnsupportedEncodingException e1)
         {

@@ -8,7 +8,7 @@ import cn.migu.trace.context.Tracer;
 
 public interface IClientInteceptor
 {
-    void preHandler(Tracer tracer, List<Header> headers, String traceName);
+    void preHandler(Tracer tracer, List<Header> headers, String traceName, String funcInfixSpanName, String anno);
     
     void afterHandler(Tracer tracer, String anno);
     
