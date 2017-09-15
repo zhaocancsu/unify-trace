@@ -239,7 +239,8 @@ public class Shell
             
             if (null != this.inteceptor)
             {
-                if (StringUtils.isNotEmpty(resultValue))
+                if (StringUtils.isNotEmpty(resultValue) && !StringUtils.equals(resultValue, "启动成功")
+                    && !StringUtils.contains(resultValue, "Start Successfully"))
                 {
                     inteceptor.afterExcepHandler(tracer, new IllegalStateException(resultValue));
                 }

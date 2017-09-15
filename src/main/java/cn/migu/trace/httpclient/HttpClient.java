@@ -277,7 +277,15 @@ class ResponseHandlerImpl implements ResponseHandler<String>
             
             if (null != this.inteceptor)
             {
-                inteceptor.afterHandler(tracer, responseBody);
+                if (StringUtils.contains(responseBody, "失败") || StringUtils.contains(responseBody, "异常"))
+                {
+                    inteceptor.afterExcepHandler(tracer, new IllegalStateException(responseBody));
+                }
+                else
+                {
+                    inteceptor.afterHandler(tracer, responseBody);
+                }
+                
             }
         }
         else
